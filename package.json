@@ -1,0 +1,47 @@
+{
+    "name": "pino-parseable",
+    "version": "1.0.0",
+    "description": "pino transport for parseable",
+    "main": "dist/index.js",
+    "author": "Battlesquid",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Battlesquid/pino-parseable.git"
+    },
+    "scripts": {
+        "build": "tsc",
+        "clean": "rm -rf dist",
+        "lint": "eslint src/**",
+        "prepare": "husky"
+    },
+    "dependencies": {
+        "pino-abstract-transport": "^1.1.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.0.0",
+        "@types/node": "16",
+        "eslint": "^9.0.0",
+        "husky": "^9.0.11",
+        "lint-staged": "^15.2.2",
+        "prettier": "3.2.5",
+        "release-it": "^17.1.1",
+        "typescript": "^5.4.3",
+        "typescript-eslint": "^7.6.0"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "types": "dist/index.d.ts",
+    "volta": {
+        "node": "21.7.2",
+        "yarn": "1.22.19"
+    },
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org"
+    },
+    "lint-staged": {
+        "*.ts": "yarn lint --fix",
+        "**/*": "prettier --write --ignore-unknown"
+    }
+}
