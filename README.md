@@ -4,8 +4,16 @@
 
 ## Install
 
+### Yarn
+
 ```shell
 yarn add pino-parseable
+```
+
+### NPM
+
+```shell
+npm i pino-parseable
 ```
 
 ## Usage
