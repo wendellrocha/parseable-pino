@@ -1,6 +1,6 @@
 {
     "name": "pino-parseable",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "description": "pino transport for parseable",
     "main": "dist/src/index.js",
     "author": "Battlesquid",
