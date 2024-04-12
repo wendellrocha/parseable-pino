@@ -42,28 +42,25 @@ export type ParseableTransportOptions = Omit<Parameters<typeof build>[1], "enabl
     auth: ParseableAuth;
 };
 
-type ParseableSendOptions = ParseableTransportOptions & {
-    data: string;
+export type ParseableSendOptions = ParseableTransportOptions & {
+    data: object;
 };
 
-const send = (options: ParseableSendOptions) => {
+export const createBasicKey = (username: string, password: string) => {
+    return Buffer.from(`${username}:${password}`).toString("base64");
+};
+
+export const send = async (options: ParseableSendOptions) => {
     const { endpoint, stream, auth, data } = options;
-    let body: string;
-    try {
-        body = JSON.stringify(data);
-    } catch (e) {
-        body = JSON.stringify({ data });
-    }
-
-    const key = "key" in auth ? auth.key : Buffer.from(`${auth.username}:${auth.password}`).toString("base64");
-
+    const body = JSON.stringify(data);
+    const key = "key" in auth ? auth.key : createBasicKey(auth.username, auth.password);
     const headers: HeadersInit = {
         "X-P-Stream": stream,
         Authorization: `Basic ${key}`,
         "Content-Type": "application/json"
     };
 
-    fetch(`${endpoint}/api/v1/ingest`, {
+    await fetch(`${endpoint}/api/v1/ingest`, {
         method: "POST",
         redirect: "follow",
         body,
@@ -73,6 +70,8 @@ const send = (options: ParseableSendOptions) => {
 
 export default async function (opts: ParseableTransportOptions) {
     return build(async function (source) {
-        source.on("data", (data) => send({ ...opts, data }));
+        for await (const data of source) {
+            send({ ...opts, data });
+        }
     });
 }

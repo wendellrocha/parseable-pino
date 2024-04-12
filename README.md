@@ -1,6 +1,6 @@
 # pino-parseable
 
-[Pino](https://getpino.io/#/) v7+ transport for [Parseable](https://www.parseable.com/).
+[Pino v7+ transport](https://getpino.io/#/docs/transports?id=v7-transports) for [Parseable](https://www.parseable.com/).
 
 ## Install
 
