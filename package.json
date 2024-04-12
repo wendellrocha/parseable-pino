@@ -14,7 +14,8 @@
         "clean": "rm -rf dist",
         "lint": "eslint src/**",
         "test": "jest",
-        "prepare": "husky"
+        "prepare": "husky",
+        "release": "release-it --no-npm"
     },
     "dependencies": {
         "pino-abstract-transport": "^1.1.0"
