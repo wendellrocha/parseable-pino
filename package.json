@@ -46,6 +46,9 @@
     "publishConfig": {
         "registry": "https://registry.npmjs.org"
     },
+    "npm": {
+        "publish": false
+    },
     "lint-staged": {
         "*.ts": "yarn lint --fix",
         "**/*": "prettier --write --ignore-unknown"
