@@ -15,7 +15,7 @@
         "lint": "eslint src/**",
         "test": "jest",
         "prepare": "husky",
-        "release": "release-it --no-npm"
+        "release": "release-it"
     },
     "dependencies": {
         "pino-abstract-transport": "^1.1.0"
