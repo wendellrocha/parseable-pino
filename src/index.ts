@@ -60,7 +60,7 @@ export const send = async (options: ParseableSendOptions) => {
         "Content-Type": "application/json"
     };
 
-    await fetch(`${endpoint}/api/v1/ingest`, {
+    await fetch(new URL("/api/v1/ingest", endpoint), {
         method: "POST",
         redirect: "follow",
         body,
