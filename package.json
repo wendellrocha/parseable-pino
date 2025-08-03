@@ -1,8 +1,7 @@
 {
     "name": "parseable-pino",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "pino transport for parseable",
-    "main": "dist/src/index.js",
     "author": "wendellrocha",
     "license": "MIT",
     "repository": {
@@ -31,8 +30,9 @@
         "typescript": "^5.9.2",
         "typescript-eslint": "^8.38.0"
     },
+    "main": "dist/index.js",
     "files": [
-        "dist/src/**"
+        "dist"
     ],
     "types": "dist/src/index.d.ts",
     "volta": {
