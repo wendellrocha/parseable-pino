@@ -1,6 +1,8 @@
 name: Publish Package to npmjs
+
 on:
-    workflow_dispatch:
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -8,15 +10,16 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: latest
           run_install: false
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24.x'
@@ -24,9 +27,14 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm clean
-      - run: pnpm build
-      - run: npm publish --provenance --access public
+        run: pnpm install --frozen-lockfile
+
+      - name: Build package
+        run: |
+          pnpm clean
+          pnpm build
+
+      - name: Publish to npmjs
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
