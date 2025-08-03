@@ -2,28 +2,20 @@ import build from "pino-abstract-transport";
 
 export type ParseableUsernamePasswordAuth = {
     /**
-     * The username for your parseable instance.
+     * The Basic authorization header.
+     * Base64 from username:password
      */
-    username: string;
-
-    /**
-     * The password for your parseable instance.
-     */
-    password: string;
+    authorization: string;
 };
 
 export type ParseableAuth = ParseableUsernamePasswordAuth;
 
 export type ParseableTransportOptions = Omit<Parameters<typeof build>[1], "enablePipelining"> & {
     /**
-     * The parseable endpoint to send logs to
+     * The parseable endpoint to send logs to.
+     * your-parseable.com/api/v1/logstream/<stream>
      */
     endpoint: string;
-
-    /**
-     * The name of the stream to send logs to
-     */
-    stream: string;
 
     /**
      * The authentication credentials for your parseable instance. Can provide a pre-encoded key or
@@ -42,15 +34,14 @@ export const createBasicKey = (username: string, password: string) => {
 };
 
 export const send = async (options: ParseableSendOptions) => {
-    const { endpoint, stream, auth, data } = options;
+    const { endpoint, auth, data } = options;
     const body = JSON.stringify(data);
-    const key = createBasicKey(auth.username, auth.password);
     const headers: HeadersInit = {
-        Authorization: `Basic ${key}`,
+        Authorization: `Basic ${auth.authorization}`,
         "Content-Type": "application/json"
     };
 
-    await fetch(`${endpoint}/api/v1/logstream/${stream}`, {
+    await fetch(endpoint, {
         method: "POST",
         redirect: "follow",
         body,
