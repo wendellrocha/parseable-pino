@@ -15,11 +15,11 @@ export type ParseableTransportOptions = Omit<Parameters<typeof build>[1], "enabl
     authorization: string;
 };
 
-export type ParseableSendOptions = ParseableTransportOptions & {
+type ParseableSendOptions = ParseableTransportOptions & {
     data: object;
 };
 
-export const send = async (options: ParseableSendOptions) => {
+const send = async (options: ParseableSendOptions) => {
     const { endpoint, authorization, data } = options;
     const body = JSON.stringify(data);
     const headers: HeadersInit = {
@@ -35,10 +35,10 @@ export const send = async (options: ParseableSendOptions) => {
     });
 };
 
-export default async function (opts: ParseableTransportOptions) {
-    return build(async function (source) {
+export default (options: ParseableTransportOptions) => {
+    return build(async function ingest(source) {
         for await (const data of source) {
-            send({ ...opts, data });
+            send({ ...options, data });
         }
     });
-}
+};
