@@ -1,15 +1,5 @@
 import build from "pino-abstract-transport";
 
-export type ParseableUsernamePasswordAuth = {
-    /**
-     * The Basic authorization header.
-     * Base64 from username:password
-     */
-    authorization: string;
-};
-
-export type ParseableAuth = ParseableUsernamePasswordAuth;
-
 export type ParseableTransportOptions = Omit<Parameters<typeof build>[1], "enablePipelining"> & {
     /**
      * The parseable endpoint to send logs to.
@@ -22,22 +12,18 @@ export type ParseableTransportOptions = Omit<Parameters<typeof build>[1], "enabl
      * a username and password to convert into a key. If both are provided, the pre-encoded
      * key takes precedence.
      */
-    auth: ParseableAuth;
+    authorization: string;
 };
 
 export type ParseableSendOptions = ParseableTransportOptions & {
     data: object;
 };
 
-export const createBasicKey = (username: string, password: string) => {
-    return Buffer.from(`${username}:${password}`).toString("base64");
-};
-
 export const send = async (options: ParseableSendOptions) => {
-    const { endpoint, auth, data } = options;
+    const { endpoint, authorization, data } = options;
     const body = JSON.stringify(data);
     const headers: HeadersInit = {
-        Authorization: `Basic ${auth.authorization}`,
+        Authorization: `Basic ${authorization}`,
         "Content-Type": "application/json"
     };
 
