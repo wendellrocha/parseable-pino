@@ -1,11 +1,13 @@
 {
     "compilerOptions": {
-        "target": "ES2020",
-        "module": "CommonJS", // Essencial para module.exports
-        "outDir": "./dist", // O mesmo diretório do package.json
-        "rootDir": "./",
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "outDir": "./dist",
+        "rootDir": "./src",
         "strict": true,
         "esModuleInterop": true,
-        "moduleResolution": "node"
-    }
+        "declaration": true
+    },
+    "include": ["src/**/*"]
 }
