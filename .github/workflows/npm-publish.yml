@@ -9,11 +9,21 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      # Setup .npmrc file to publish to npm
+      
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: '24.x'
+          cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
+      
+
+      - name: Install dependencies
       - run: pnpm install --frozen-lockfile
       - run: pnpm clean
       - run: pnpm build
