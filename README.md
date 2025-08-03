@@ -1,16 +1,8 @@
-# pino-parseable
+# parseable-pino
 
 [Pino v7+ transport](https://getpino.io/#/docs/transports?id=v7-transports) for [Parseable](https://www.parseable.com/).
 
 ## Install
-
-### Yarn
-
-```shell
-yarn add pino-parseable
-```
-
-### NPM
 
 ```shell
 npm i pino-parseable
@@ -29,9 +21,6 @@ const options: ParseableTransportOptions = {
     endpoint: "https://my-parseable-instance.com",
     stream: "my-test-stream",
     auth: {
-        // provide your base64 encoded key directly
-        key: Buffer.from(`${myUsername}:${myPassword}`).toString("base64"),
-        // or provide your username and password as is
         username: myUsername,
         password: myPassword
     }

@@ -12,16 +12,7 @@ export type ParseableUsernamePasswordAuth = {
     password: string;
 };
 
-export type ParseableKeyAuth = {
-    /**
-     * The base64 encoded version of your credentials.
-     *
-     * Reference: https://www.parseable.com/docs/parseable-key-concepts
-     */
-    key: string;
-};
-
-export type ParseableAuth = ParseableUsernamePasswordAuth | ParseableKeyAuth;
+export type ParseableAuth = ParseableUsernamePasswordAuth;
 
 export type ParseableTransportOptions = Omit<Parameters<typeof build>[1], "enablePipelining"> & {
     /**
@@ -53,14 +44,13 @@ export const createBasicKey = (username: string, password: string) => {
 export const send = async (options: ParseableSendOptions) => {
     const { endpoint, stream, auth, data } = options;
     const body = JSON.stringify(data);
-    const key = "key" in auth ? auth.key : createBasicKey(auth.username, auth.password);
+    const key = createBasicKey(auth.username, auth.password);
     const headers: HeadersInit = {
-        "X-P-Stream": stream,
         Authorization: `Basic ${key}`,
         "Content-Type": "application/json"
     };
 
-    await fetch(new URL("/api/v1/ingest", endpoint), {
+    await fetch(`${endpoint}/api/v1/logstream/${stream}`, {
         method: "POST",
         redirect: "follow",
         body,
