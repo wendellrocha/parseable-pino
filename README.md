@@ -5,7 +5,7 @@
 ## Install
 
 ```shell
-npm i pino-parseable
+npm i parseable-pino
 ```
 
 ## Usage
