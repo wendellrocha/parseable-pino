@@ -28,11 +28,6 @@ export type ParseableTransportOptions = Omit<Parameters<typeof build>[1], "enabl
      * Initial retry delay in milliseconds. Increases exponentially. Default: 1000
      */
     retryDelay?: number;
-
-    /**
-     * Optional callback when a log send fails (after all retries exhausted)
-     */
-    onError?: (error: Error) => void;
 };
 
 type ParseableSendOptions = ParseableTransportOptions & {
@@ -50,7 +45,7 @@ export enum ParseableLogLevel {
 }
 
 const send = async (options: ParseableSendOptions) => {
-    const { endpoint, authorization, data, timeout = 5000, maxRetries = 3, retryDelay = 1000, onError } = options;
+    const { endpoint, authorization, data, timeout = 5000, maxRetries = 3, retryDelay = 1000 } = options;
 
     const body = JSON.stringify(data);
     const headers: HeadersInit = {
@@ -90,8 +85,8 @@ const send = async (options: ParseableSendOptions) => {
         }
     }
 
-    if (lastError && onError) {
-        onError(lastError);
+    if (lastError) {
+        console.error(`[parseable-pino] Failed to send log after ${maxRetries} retries: ${lastError.message}`);
     }
 };
 
@@ -137,30 +132,15 @@ function mapLogLevel(level: string | number) {
 }
 
 export default (options: ParseableTransportOptions) => {
-    const defaultOnError = (error: Error) => {
-        console.error(`[parseable-pino] Failed to send log after retries: ${error.message}`);
-    };
-
-    const onError = options.onError || defaultOnError;
-
     return build(async function ingest(source) {
-        try {
-            for await (const obj of source) {
-                try {
-                    const data = {
-                        ...obj,
-                        date: createDate(obj.time),
-                        level: mapLogLevel(obj.level)
-                    };
+        for await (const obj of source) {
+            const data = {
+                ...obj,
+                date: createDate(obj.time),
+                level: mapLogLevel(obj.level)
+            };
 
-                    send({ ...options, data, onError });
-                } catch (error) {
-                    onError(error instanceof Error ? error : new Error(String(error)));
-                }
-            }
-        } catch (error) {
-            const err = error instanceof Error ? error : new Error(String(error));
-            onError(err);
+            send({ ...options, data });
         }
     });
 };

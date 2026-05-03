@@ -43,12 +43,7 @@ const options: ParseableTransportOptions = {
     authorization: auth,
     timeout: 10000, // 10s timeout (default: 5000ms)
     maxRetries: 5, // retry 5 times (default: 3)
-    retryDelay: 2000, // initial delay 2s (default: 1000ms), increases exponentially
-    onError: (error) => {
-        // Handle send failures after all retries exhausted
-        console.error("Failed to send logs:", error.message);
-        // Could send to fallback system, metrics, etc
-    }
+    retryDelay: 2000 // initial delay 2s (default: 1000ms), increases exponentially
 };
 
 const logger = pino({
@@ -73,7 +68,6 @@ const logger = pino({
 - **timeout** (number, default: 5000): Fetch timeout in milliseconds
 - **maxRetries** (number, default: 3): Maximum number of retry attempts
 - **retryDelay** (number, default: 1000): Initial retry delay in milliseconds (increases exponentially with each retry)
-- **onError** (function): Callback for when log send fails after all retries
 
 ## Features
 
@@ -97,10 +91,7 @@ const logger = pino({
             endpoint: process.env.PARSEABLE_ENDPOINT,
             authorization: process.env.PARSEABLE_AUTH,
             timeout: 8000,
-            onError: (error) => {
-                // Fallback: also log to stderr if Parseable fails
-                console.error("[Parseable Error]", error.message);
-            }
+            maxRetries: 5
         }
     }
 });
