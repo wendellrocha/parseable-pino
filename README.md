@@ -10,28 +10,107 @@ npm i parseable-pino
 
 ## Usage
 
+### Basic
+
 ```ts
 import { pino } from "pino";
-import { ParseableTransportOptions } from "pino-parseable";
+import { ParseableTransportOptions } from "parseable-pino";
 
 const myUsername = "foo";
 const myPassword = "bar";
+const auth = Buffer.from(`${myUsername}:${myPassword}`).toString("base64");
 
 const options: ParseableTransportOptions = {
-    endpoint: "https://my-parseable-instance.com",
-    stream: "my-test-stream",
-    auth: {
-        username: myUsername,
-        password: myPassword
-    }
+    endpoint: "https://my-parseable-instance.com/api/v1/logstream/my-stream",
+    authorization: auth
 };
 
 const logger = pino({
     transport: {
-        target: "pino-parseable",
+        target: "parseable-pino",
         options
     }
 });
 
 logger.info("Hello world");
+```
+
+### With Resilience Options
+
+```ts
+const options: ParseableTransportOptions = {
+    endpoint: "https://my-parseable-instance.com/api/v1/logstream/my-stream",
+    authorization: auth,
+    timeout: 10000, // 10s timeout (default: 5000ms)
+    maxRetries: 5, // retry 5 times (default: 3)
+    retryDelay: 2000, // initial delay 2s (default: 1000ms), increases exponentially
+    onError: (error) => {
+        // Handle send failures after all retries exhausted
+        console.error("Failed to send logs:", error.message);
+        // Could send to fallback system, metrics, etc
+    }
+};
+
+const logger = pino({
+    transport: {
+        target: "parseable-pino",
+        options
+    }
+});
+```
+
+## Configuration
+
+### Required
+
+- **endpoint** (string): Full Parseable API endpoint URL including stream name
+    - Format: `https://your-parseable.com/api/v1/logstream/<stream-name>`
+- **authorization** (string): Base64-encoded basic auth credentials
+    - Format: `Base64(username:password)`
+
+### Optional (Resilience)
+
+- **timeout** (number, default: 5000): Fetch timeout in milliseconds
+- **maxRetries** (number, default: 3): Maximum number of retry attempts
+- **retryDelay** (number, default: 1000): Initial retry delay in milliseconds (increases exponentially with each retry)
+- **onError** (function): Callback for when log send fails after all retries
+
+## Features
+
+- ✅ Automatic retry with exponential backoff
+- ✅ Configurable timeout to prevent hung connections
+- ✅ Graceful error handling (won't crash your app)
+- ✅ Optional error callback for custom handling
+- ✅ Follows Pino v7+ transport spec
+
+## Example with Express
+
+```ts
+import express from "express";
+import { pino } from "pino";
+import parseablePino from "parseable-pino";
+
+const logger = pino({
+    transport: {
+        target: "parseable-pino",
+        options: {
+            endpoint: process.env.PARSEABLE_ENDPOINT,
+            authorization: process.env.PARSEABLE_AUTH,
+            timeout: 8000,
+            onError: (error) => {
+                // Fallback: also log to stderr if Parseable fails
+                console.error("[Parseable Error]", error.message);
+            }
+        }
+    }
+});
+
+const app = express();
+
+app.get("/", (req, res) => {
+    logger.info("Request received");
+    res.send("OK");
+});
+
+app.listen(3000);
 ```
