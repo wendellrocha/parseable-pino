@@ -5,7 +5,6 @@
 
 /** @type {import('jest').Config} */
 const config = {
-    preset: "ts-jest",
     // All imported modules in your tests should be mocked automatically
     // automock: false,
 
@@ -144,7 +143,7 @@ const config = {
     // snapshotSerializers: [],
 
     // The test environment that will be used for testing
-    // testEnvironment: "jest-environment-node",
+    testEnvironment: "node",
 
     // Options that will be passed to the testEnvironment
     // testEnvironmentOptions: {},

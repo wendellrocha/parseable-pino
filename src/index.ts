@@ -34,6 +34,8 @@ type ParseableSendOptions = ParseableTransportOptions & {
     data: object;
 };
 
+type ReportError = (error: unknown, context: string) => void;
+
 export enum ParseableLogLevel {
     Trace = "trace",
     Debug = "debug",
@@ -44,10 +46,36 @@ export enum ParseableLogLevel {
     Silent = "silent"
 }
 
-const send = async (options: ParseableSendOptions) => {
+function toError(error: unknown) {
+    return error instanceof Error ? error : new Error(String(error));
+}
+
+function reportError(error: unknown, context: string) {
+    const message = toError(error).message;
+
+    try {
+        console.error(`[parseable-pino] ${context}: ${message}`);
+    } catch {
+        // Never allow transport diagnostics to crash the host application.
+    }
+}
+
+function sleep(delay: number) {
+    return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+async function send(options: ParseableSendOptions, handleError: ReportError) {
     const { endpoint, authorization, data, timeout = 5000, maxRetries = 3, retryDelay = 1000 } = options;
 
-    const body = JSON.stringify(data);
+    let body: string;
+
+    try {
+        body = JSON.stringify(data);
+    } catch (error) {
+        handleError(error, "Failed to serialize log payload");
+        return;
+    }
+
     const headers: HeadersInit = {
         Authorization: `Basic ${authorization}`,
         "Content-Type": "application/json"
@@ -56,9 +84,11 @@ const send = async (options: ParseableSendOptions) => {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            timeoutId = setTimeout(() => controller.abort(), timeout);
 
             const response = await fetch(endpoint, {
                 method: "POST",
@@ -68,27 +98,28 @@ const send = async (options: ParseableSendOptions) => {
                 signal: controller.signal
             });
 
-            clearTimeout(timeoutId);
-
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             return;
         } catch (error) {
-            lastError = error instanceof Error ? error : new Error(String(error));
+            lastError = toError(error);
 
             if (attempt < maxRetries) {
-                const delay = retryDelay * Math.pow(2, attempt);
-                await new Promise((resolve) => setTimeout(resolve, delay));
+                await sleep(retryDelay * Math.pow(2, attempt));
+            }
+        } finally {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
             }
         }
     }
 
     if (lastError) {
-        console.error(`[parseable-pino] Failed to send log after ${maxRetries} retries: ${lastError.message}`);
+        handleError(lastError, `Failed to send log after ${maxRetries} retries`);
     }
-};
+}
 
 function isValidDate(date: Date) {
     return date instanceof Date && !Number.isNaN(date.getTime());
@@ -132,15 +163,55 @@ function mapLogLevel(level: string | number) {
 }
 
 export default (options: ParseableTransportOptions) => {
-    return build(async function ingest(source) {
-        for await (const obj of source) {
-            const data = {
+    const inflight = new Set<Promise<void>>();
+
+    function track(promise: Promise<void>) {
+        inflight.add(promise);
+        promise.finally(() => {
+            inflight.delete(promise);
+        });
+    }
+
+    function buildPayload(obj: { time: number; level: string | number; [key: string]: unknown }) {
+        try {
+            return {
                 ...obj,
                 date: createDate(obj.time),
                 level: mapLogLevel(obj.level)
             };
-
-            send({ ...options, data });
+        } catch (error) {
+            reportError(error, "Failed to prepare log payload");
+            return null;
         }
-    });
+    }
+
+    function enqueueSend(data: object) {
+        const sendPromise = send({ ...options, data }, reportError);
+        track(sendPromise);
+        void sendPromise.catch((error) => {
+            reportError(error, "Unexpected transport failure");
+        });
+    }
+
+    return build(
+        async function ingest(source) {
+            try {
+                for await (const obj of source) {
+                    const data = buildPayload(obj);
+                    if (!data) {
+                        continue;
+                    }
+
+                    enqueueSend(data);
+                }
+            } catch (error) {
+                reportError(error, "Unexpected ingest failure");
+            }
+        },
+        {
+            close: async () => {
+                await Promise.allSettled(Array.from(inflight));
+            }
+        }
+    );
 };

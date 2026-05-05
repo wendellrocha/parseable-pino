@@ -54,6 +54,8 @@ const logger = pino({
 });
 ```
 
+This transport is best-effort by default. If Parseable is slow or unavailable, it retries using the configured policy, logs a local error, drops the failed log event, and keeps your app running.
+
 ## Configuration
 
 ### Required
@@ -73,8 +75,8 @@ const logger = pino({
 
 - ✅ Automatic retry with exponential backoff
 - ✅ Configurable timeout to prevent hung connections
-- ✅ Graceful error handling (won't crash your app)
-- ✅ Optional error callback for custom handling
+- ✅ Best-effort delivery with local error reporting
+- ✅ Drops failed log events after retries instead of crashing the host app
 - ✅ Follows Pino v7+ transport spec
 
 ## Example with Express

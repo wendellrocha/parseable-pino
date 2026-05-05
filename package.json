@@ -12,6 +12,7 @@
         "build": "tsc",
         "clean": "rm -rf dist",
         "lint": "eslint src/**",
+        "test": "pnpm build && jest --runInBand",
         "prepare": "husky"
     },
     "dependencies": {
@@ -23,6 +24,7 @@
         "@types/node": "^24.1.0",
         "eslint": "^9.32.0",
         "husky": "^9.1.7",
+        "jest": "^30.0.5",
         "lint-staged": "^16.1.2",
         "nock": "^14.0.8",
         "pino": "^9.7.0",
