@@ -99,7 +99,8 @@ async function send(options: ParseableSendOptions, handleError: ReportError) {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const errorBody = await response.text().catch(() => "");
+                throw new Error(`HTTP ${response.status}: ${response.statusText}${errorBody ? ` - ${errorBody}` : ""}`);
             }
 
             return;

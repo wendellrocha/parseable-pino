@@ -52,7 +52,8 @@ describe("parseable-pino transport", () => {
         global.fetch = jest.fn().mockResolvedValue({
             ok: false,
             status: 503,
-            statusText: "Service Unavailable"
+            statusText: "Service Unavailable",
+            text: jest.fn().mockResolvedValue("Backend error")
         });
 
         const transport = createTransport(createOptions({ maxRetries: 2 }));
@@ -60,7 +61,22 @@ describe("parseable-pino transport", () => {
         await writeLogLine(transport, '{"time":1714977285000,"level":30,"msg":"retry-me"}');
 
         expect(global.fetch).toHaveBeenCalledTimes(3);
-        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Failed to send log after 2 retries: HTTP 503: Service Unavailable"));
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Failed to send log after 2 retries: HTTP 503: Service Unavailable - Backend error"));
+    });
+
+    test("reports response body on non-2xx responses", async () => {
+        global.fetch = jest.fn().mockResolvedValue({
+            ok: false,
+            status: 400,
+            statusText: "Bad Request",
+            text: jest.fn().mockResolvedValue('{"error":"invalid log format"}')
+        });
+
+        const transport = createTransport(createOptions({ maxRetries: 0 }));
+
+        await writeLogLine(transport, '{"time":1714977285000,"level":30,"msg":"bad-req"}');
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('HTTP 400: Bad Request - {"error":"invalid log format"}'));
     });
 
     test("aborts timed out requests and reports locally", async () => {
